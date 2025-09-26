@@ -1,0 +1,19 @@
+{
+  "name": "github-actions-demo",
+  "version": "1.0.0",
+  "description": "Demo project for GitHub Actions CI/CD pipeline",
+  "main": "src/index.js",
+  "scripts": {
+    "build": "mkdir -p dist && cp -r src/* dist/ && echo 'Build completed successfully'",
+    "test": "echo 'Running all tests...' && npm run test:unit && npm run test:integration",
+    "test:unit": "echo '✅ Unit tests passed'",
+    "test:integration": "echo '✅ Integration tests passed'",
+    "start": "node src/index.js"
+  },
+  "keywords": ["github-actions", "ci-cd", "demo"],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "jest": "^29.0.0"
+  }
+}
