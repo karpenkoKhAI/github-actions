@@ -1,0 +1,167 @@
+name: PowerShell Demo Workflow
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  # PowerShell on Windows
+  powershell-windows:
+    name: PowerShell on Windows
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Run PowerShell Commands
+        shell: powershell
+        run: |
+          Write-Host "🔍 Running Get-ChildItem (ls equivalent)"
+          Get-ChildItem
+          
+          Write-Host "`n📁 Listing files with details:"
+          Get-ChildItem | Format-Table -AutoSize
+          
+          Write-Host "`n💻 System Information:"
+          Write-Host "OS: $($PSVersionTable.OS)"
+          Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)"
+          
+          Write-Host "`n🔧 Current Location:"
+          Get-Location
+          
+          Write-Host "`n📝 Creating sample build artifacts..."
+          New-Item -ItemType Directory -Path "dist" -Force
+          "Build completed at $(Get-Date)" | Out-File -FilePath "dist/build-info.txt"
+          
+          Write-Host "✅ PowerShell commands completed successfully!"
+
+  # PowerShell Core on Ubuntu (cross-platform)
+  powershell-linux:
+    name: PowerShell Core on Ubuntu  
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Install PowerShell Core
+        run: |
+          # Update package list
+          sudo apt-get update
+          
+          # Install PowerShell
+          wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb"
+          sudo dpkg -i packages-microsoft-prod.deb
+          sudo apt-get update
+          sudo apt-get install -y powershell
+          
+      - name: Run PowerShell Core Commands
+        shell: pwsh
+        run: |
+          Write-Host "🐧 Running PowerShell Core on Linux"
+          Write-Host "🔍 Running Get-ChildItem (ls equivalent)"
+          Get-ChildItem
+          
+          Write-Host "`n📁 Listing files with details:"
+          Get-ChildItem | Format-Table -AutoSize
+          
+          Write-Host "`n💻 System Information:"
+          Write-Host "OS: $($PSVersionTable.OS)"
+          Write-Host "PowerShell Version: $($PSVersionTable.PSVersion)"
+          
+          Write-Host "`n🔧 Current Location:"
+          Get-Location
+          
+          Write-Host "`n📝 Creating sample build artifacts..."
+          New-Item -ItemType Directory -Path "dist" -Force
+          "Build completed at $(Get-Date)" | Out-File -FilePath "dist/build-info.txt"
+          
+          Write-Host "✅ PowerShell Core commands completed successfully!"
+
+  # Mixed approach - PowerShell with specific shell config
+  mixed-shell-demo:
+    name: Mixed Shell Demo
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: PowerShell with custom shell config
+        shell: pwsh -command ". '{0}'"
+        run: |
+          # This is the shell config you mentioned
+          Write-Host "🎯 Using custom PowerShell configuration"
+          Get-ChildItem
+          
+          # Example with Cake build (as mentioned in your comment)
+          Write-Host "`n🍰 Example Cake build command (commented):"
+          Write-Host "# .\cake.ps1 -Configuration release -Target Release"
+          
+      - name: Compare with CMD
+        shell: cmd
+        run: |
+          echo "📋 Same operation using CMD:"
+          dir
+          
+      - name: Compare with Bash on Windows
+        shell: bash
+        run: |
+          echo "🐚 Same operation using Bash:"
+          ls -la
+
+  # Build job with PowerShell
+  build-with-powershell:
+    name: Build with PowerShell
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies (PowerShell)
+        shell: powershell
+        run: |
+          Write-Host "📦 Installing dependencies..."
+          if (Test-Path "package-lock.json") {
+            npm ci
+          } elseif (Test-Path "yarn.lock") {
+            yarn install --frozen-lockfile
+          } else {
+            npm install
+          }
+          
+      - name: Build application (PowerShell)
+        shell: powershell
+        run: |
+          Write-Host "🔨 Building application..."
+          if ((Test-Path "package.json") -and (npm run build 2>$null)) {
+            npm run build
+          } else {
+            Write-Host "No build script found, creating sample build artifacts"
+            New-Item -ItemType Directory -Path "dist" -Force
+            "Build completed at $(Get-Date)" | Out-File -FilePath "dist/build-info.txt"
+            '{"version": "1.0.0", "build": "' + (Get-Date) + '"}' | Out-File -FilePath "dist/manifest.json"
+          }
+          
+          Write-Host "📁 Build artifacts created:"
+          Get-ChildItem -Path "dist" -Recurse
+          
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: powershell-build-artifacts
+          path: |
+            dist/
+            build/
+          retention-days: 7

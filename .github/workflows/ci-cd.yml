@@ -27,7 +27,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: ${{ hashFiles('**/package-lock.json', '**/yarn.lock') && 'npm' || '' }}
           
       - name: Install dependencies
         run: |
@@ -78,7 +78,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: ${{ hashFiles('**/package-lock.json', '**/yarn.lock') && 'npm' || '' }}
           
       - name: Install dependencies
         run: |
